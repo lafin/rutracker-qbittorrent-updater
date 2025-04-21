@@ -38,7 +38,7 @@ This tool monitors your qBittorrent torrents that have RuTracker links in their 
 Basic usage:
 
 ```bash
-python rutracker_qbt_updater.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password"
+python main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password"
 ```
 
 ### Command Line Arguments
@@ -87,7 +87,7 @@ crontab -e
 Add the following line:
 
 ```
-0 3 * * * /path/to/python /path/to/rutracker_qbt_updater.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password" >> /path/to/logfile.log 2>&1
+0 3 * * * /path/to/python /path/to/main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password" >> /path/to/logfile.log 2>&1
 ```
 
 ### Using Task Scheduler (Windows)
@@ -95,7 +95,7 @@ Add the following line:
 1. Create a batch file (update_torrents.bat) with the following content:
    ```batch
    @echo off
-   python C:\path\to\rutracker_qbt_updater.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password"
+   python C:\path\to\main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password"
    ```
 
 2. Open Task Scheduler and create a new task that runs this batch file at your desired schedule.
