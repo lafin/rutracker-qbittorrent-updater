@@ -29,11 +29,38 @@ def parse_arguments():
     parser.add_argument('--rutracker-username', required=True, help='RuTracker username')
     parser.add_argument('--rutracker-password', required=True, help='RuTracker password')
 
+    # Telegram notification settings
+    parser.add_argument('--tg-token', help='Telegram bot token for notifications')
+    parser.add_argument('--tg-chat-id', help='Telegram chat ID to send notifications to')
+
     # Additional options
     parser.add_argument('--temp-dir', default='/tmp', help='Directory for temporary files')
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
 
     return parser.parse_args()
+
+def send_telegram_notification(token, chat_id, message):
+    """Send a notification message via Telegram"""
+    if not token or not chat_id:
+        return False
+
+    telegram_api_url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "HTML"
+    }
+
+    try:
+        response = requests.post(telegram_api_url, data=payload, timeout=10)
+        if response.status_code == 200:
+            return True
+        else:
+            print(f"Failed to send Telegram notification: {response.text}")
+            return False
+    except Exception as e:
+        print(f"Error sending Telegram notification: {str(e)}")
+        return False
 
 def make_request(session, method, url, **kwargs):
     """Make HTTP request with retry logic and timeout"""
@@ -192,6 +219,13 @@ def main():
     else:
         print("Checking all torrents (no tag filter specified)")
 
+    # Check if Telegram notifications are enabled
+    telegram_enabled = args.tg_token and args.tg_chat_id
+    if telegram_enabled:
+        print("Telegram notifications are enabled")
+    else:
+        print("Telegram notifications are disabled")
+
     for torrent in torrents:
         # Skip torrents that don't have the specified tag if --qbt-tag is provided
         if args.qbt_tag:
@@ -243,6 +277,18 @@ def main():
 
                     qbt_client.torrents_add(torrent_files=torrent_data, **add_options)
                     print(f"Added new torrent {torrent.name}")
+
+                    # Send Telegram notification if enabled
+                    if telegram_enabled:
+                        message = (
+                            f"<b>Torrent Updated</b>\n\n"
+                            f"<b>Name:</b> {torrent.name}\n"
+                            f"<b>RuTracker topic:</b> <a href='https://rutracker.org/forum/viewtopic.php?t={topic_id}'>#{topic_id}</a>"
+                        )
+                        if send_telegram_notification(args.tg_token, args.tg_chat_id, message):
+                            print("Telegram notification sent successfully")
+                        else:
+                            print("Failed to send Telegram notification")
                 else:
                     print(f"No changes detected for torrent {torrent.name}")
 

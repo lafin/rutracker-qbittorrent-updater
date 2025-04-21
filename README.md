@@ -11,6 +11,7 @@ This tool monitors your qBittorrent torrents that have RuTracker links in their 
 - **Automatic Updates**: Detects and applies updates to torrents from RuTracker
 - **Data Preservation**: Keeps your downloaded data when updating torrents
 - **Tag Filtering**: Option to only check torrents with specific tags
+- **Telegram Notifications**: Get notified when torrents are updated
 - **Robust Connection Handling**: Implements timeouts, retries, and proper user agent settings
 - **Respectful Scraping**: Includes delays between requests to avoid overloading RuTracker servers
 
@@ -19,6 +20,7 @@ This tool monitors your qBittorrent torrents that have RuTracker links in their 
 - Python 3.6+
 - qBittorrent with Web UI enabled
 - RuTracker account
+- Telegram bot (optional, for notifications)
 
 ## Installation
 
@@ -53,6 +55,8 @@ python main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-p
 | `--rutracker-password` | RuTracker password |
 | `--temp-dir` | Directory for temporary files (default: /tmp) |
 | `--verbose`, `-v` | Enable verbose output |
+| `--tg-token` | Telegram bot token for notifications (optional) |
+| `--tg-chat-id` | Telegram chat ID to send notifications to (optional) |
 
 ## How It Works
 
@@ -63,6 +67,7 @@ python main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-p
    - If a link is found, it downloads the current .torrent file from RuTracker
    - It compares the size of the downloaded torrent with the existing one
    - If the size differs, it replaces the old torrent with the new one while preserving settings
+   - If Telegram notifications are enabled, it sends a message about the update
 
 ## Connection Handling
 
@@ -73,6 +78,19 @@ The script implements several measures to ensure reliable and respectful connect
 - Sets a 30-second timeout for all HTTP requests
 - Implements a retry mechanism (up to 5 attempts) with exponential backoff
 - Continues with the next torrent if a request fails after all retry attempts
+
+## Telegram Notifications
+
+To receive Telegram notifications when torrents are updated:
+
+1. Create a Telegram bot using BotFather (https://t.me/botfather) and get the token
+2. Find your chat ID (you can use the @userinfobot or @RawDataBot)
+3. Add the `--tg-token` and `--tg-chat-id` arguments when running the script
+
+The script will send a message whenever a torrent is updated, including:
+- The name of the updated torrent
+- The old and new sizes
+- The RuTracker topic ID
 
 ## Setting Up Automation
 
@@ -87,7 +105,7 @@ crontab -e
 Add the following line:
 
 ```
-0 3 * * * /path/to/python /path/to/main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password" >> /path/to/logfile.log 2>&1
+0 3 * * * /path/to/python /path/to/main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password" --tg-token "your_telegram_bot_token" --tg-chat-id "your_telegram_chat_id" >> /path/to/logfile.log 2>&1
 ```
 
 ### Using Task Scheduler (Windows)
@@ -95,7 +113,7 @@ Add the following line:
 1. Create a batch file (update_torrents.bat) with the following content:
    ```batch
    @echo off
-   python C:\path\to\main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password"
+   python C:\path\to\main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password" --tg-token "your_telegram_bot_token" --tg-chat-id "your_telegram_chat_id"
    ```
 
 2. Open Task Scheduler and create a new task that runs this batch file at your desired schedule.
@@ -108,6 +126,8 @@ Add the following line:
 
 3. **Logging**: Redirect the script output to a log file to keep track of updates and potential issues.
 
+4. **Telegram Privacy**: Create a dedicated bot for this purpose rather than using a bot that serves other functions.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -119,6 +139,8 @@ Add the following line:
 3. **Permission Errors**: Ensure the script has write access to the temporary directory.
 
 4. **qBittorrent Connection Issues**: Verify that the Web UI is enabled and accessible from the machine running the script.
+
+5. **Telegram Notification Issues**: Make sure your bot is active and you've started a conversation with it.
 
 ## Contributing
 
