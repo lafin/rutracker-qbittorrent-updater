@@ -1,8 +1,10 @@
 bencodepy==0.9.5
-certifi==2025.1.31
-charset-normalizer==3.4.1
+certifi==2025.4.26
+charset-normalizer==3.4.2
 idna==3.10
-packaging==24.2
-qbittorrent-api==2025.2.0
+lockfile==0.12.2
+packaging==25.0
+python-daemon==3.1.2
+qbittorrent-api==2025.5.0
 requests==2.32.3
-urllib3==2.3.0
+urllib3==2.4.0

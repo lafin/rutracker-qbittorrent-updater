@@ -1,6 +1,6 @@
 # RuTracker to qBittorrent Updater
 
-A robust Python utility that automatically updates your qBittorrent torrents when their corresponding RuTracker sources are updated.
+A robust Python utility that automatically updates your qBittorrent torrents when their corresponding RuTracker sources are updated, and notifies you via Telegram when a torrent finishes downloading.
 
 ## Overview
 
@@ -11,6 +11,9 @@ This tool monitors your qBittorrent torrents that have RuTracker links in their 
 - **Automatic Updates**: Detects and applies updates to torrents from RuTracker
 - **Data Preservation**: Keeps your downloaded data when updating torrents
 - **Tag Filtering**: Option to only check torrents with specific tags
+- **Telegram Notifications**:  
+  - Get notified when torrents are updated  
+  - **Get notified when torrents finish downloading**
 - **Robust Connection Handling**: Implements timeouts, retries, and proper user agent settings
 - **Respectful Scraping**: Includes delays between requests to avoid overloading RuTracker servers
 
@@ -19,6 +22,7 @@ This tool monitors your qBittorrent torrents that have RuTracker links in their 
 - Python 3.6+
 - qBittorrent with Web UI enabled
 - RuTracker account
+- Telegram bot (optional, for notifications)
 
 ## Installation
 
@@ -43,26 +47,35 @@ python main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-p
 
 ### Command Line Arguments
 
-| Argument | Description |
-|----------|-------------|
-| `--qbt-host` | qBittorrent Web UI URL (e.g., http://192.168.0.77:8080) |
-| `--qbt-username` | qBittorrent Web UI username |
-| `--qbt-password` | qBittorrent Web UI password |
-| `--qbt-tag` | Only check torrents with this tag (optional) |
-| `--rutracker-username` | RuTracker username |
-| `--rutracker-password` | RuTracker password |
-| `--temp-dir` | Directory for temporary files (default: /tmp) |
-| `--verbose`, `-v` | Enable verbose output |
+| Argument            | Description                                                                                      |
+|---------------------|--------------------------------------------------------------------------------------------------|
+| `--qbt-host`        | qBittorrent Web UI URL (e.g., http://192.168.0.77:8080)                                         |
+| `--qbt-username`    | qBittorrent Web UI username                                                                     |
+| `--qbt-password`    | qBittorrent Web UI password                                                                     |
+| `--qbt-tag`         | Only check torrents with this tag (optional)                                                    |
+| `--rutracker-username` | RuTracker username                                                                           |
+| `--rutracker-password` | RuTracker password                                                                           |
+| `--tg-token`        | Telegram bot token for notifications (optional)                                                 |
+| `--tg-chat-id`      | Telegram chat ID to send notifications to (optional)                                            |
+| `--temp-dir`        | Directory for temporary files (default: /tmp)                                                   |
+| `--verbose`, `-v`   | Enable verbose output                                                                           |
+| `--log-file`        | Log file for daemon output (default: /tmp/qbt_daemon.log)                                       |
+
+**Note:**  
+- Telegram notifications require both `--tg-token` and `--tg-chat-id` to be set.
+- The script will notify you both when a torrent is updated and when a torrent finishes downloading.
 
 ## How It Works
 
-1. The script connects to your qBittorrent client via its Web API
-2. It logs into RuTracker using your credentials
+1. The script connects to your qBittorrent client via its Web API.
+2. It logs into RuTracker using your credentials.
 3. For each torrent in qBittorrent (or only those with the specified tag):
-   - It checks if the torrent has a RuTracker link in its comments
-   - If a link is found, it downloads the current .torrent file from RuTracker
-   - It compares the size of the downloaded torrent with the existing one
-   - If the size differs, it replaces the old torrent with the new one while preserving settings
+   - It checks if the torrent has a RuTracker link in its comments.
+   - If a link is found, it downloads the current .torrent file from RuTracker.
+   - It compares the size of the downloaded torrent with the existing one.
+   - If the size differs, it replaces the old torrent with the new one while preserving settings.
+   - If Telegram notifications are enabled, it sends a message about the update.
+4. **Additionally, the script monitors the completion status of all torrents. When a torrent finishes downloading, it sends a Telegram notification with the torrent name and hash.**
 
 ## Connection Handling
 
@@ -74,31 +87,17 @@ The script implements several measures to ensure reliable and respectful connect
 - Implements a retry mechanism (up to 5 attempts) with exponential backoff
 - Continues with the next torrent if a request fails after all retry attempts
 
-## Setting Up Automation
+## Telegram Notifications
 
-### Using Cron (Linux/macOS)
+To receive Telegram notifications:
 
-To run the script automatically, for example, once a day at 3 AM:
+1. Create a Telegram bot using BotFather (https://t.me/botfather) and get the token.
+2. Find your chat ID (you can use the @userinfobot or @RawDataBot).
+3. Add the `--tg-token` and `--tg-chat-id` arguments when running the script.
 
-```bash
-crontab -e
-```
-
-Add the following line:
-
-```
-0 3 * * * /path/to/python /path/to/main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password" >> /path/to/logfile.log 2>&1
-```
-
-### Using Task Scheduler (Windows)
-
-1. Create a batch file (update_torrents.bat) with the following content:
-   ```batch
-   @echo off
-   python C:\path\to\main.py --qbt-host "http://localhost:8080" --qbt-username "admin" --qbt-password "adminpassword" --rutracker-username "your_username" --rutracker-password "your_password"
-   ```
-
-2. Open Task Scheduler and create a new task that runs this batch file at your desired schedule.
+The script will send a message whenever:
+- A torrent is updated (includes the name, old and new sizes, and RuTracker topic ID)
+- **A torrent finishes downloading (includes the name and hash)**
 
 ## Best Practices
 
@@ -107,6 +106,8 @@ Add the following line:
 2. **Security**: Consider storing your credentials in environment variables or a configuration file with restricted permissions instead of directly in command line arguments.
 
 3. **Logging**: Redirect the script output to a log file to keep track of updates and potential issues.
+
+4. **Telegram Privacy**: Create a dedicated bot for this purpose rather than using a bot that serves other functions.
 
 ## Troubleshooting
 
@@ -119,6 +120,8 @@ Add the following line:
 3. **Permission Errors**: Ensure the script has write access to the temporary directory.
 
 4. **qBittorrent Connection Issues**: Verify that the Web UI is enabled and accessible from the machine running the script.
+
+5. **Telegram Notification Issues**: Make sure your bot is active and you've started a conversation with it.
 
 ## Contributing
 
